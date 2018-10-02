@@ -1,7 +1,12 @@
+import operator
+
 # Token Types
 #
 # EOF (end-of-file) token is used to indicate that there is no ore input left for lexical analysis
-INTEGER, PLUS, EOF = 'INTEGER', 'PLUS', 'EOF'
+INTEGER, OPERATION, EOF = 'INTEGER', 'OPERATION', 'EOF'
+
+ops = {'+': operator.add,
+       '-': operator.sub}
 
 
 class Token(object):
@@ -58,15 +63,15 @@ class Interpreter(object):
         # index to point to the next character after the digit,
         # and return the INTEGER token
         if current_char.isdigit():
-            while (self.pos + 1) < len(text) and text[self.pos + 1] != '+':
+            while (self.pos + 1) < len(text) and text[self.pos + 1] not in ops:
                 self.pos += 1
                 current_char += text[self.pos]
             self.pos += 1
             token = Token(INTEGER, int(current_char))
             return token
 
-        if current_char == '+':
-            token = Token(PLUS, current_char)
+        if current_char in ops:
+            token = Token(OPERATION, current_char)
             self.pos += 1
             return token
 
@@ -91,9 +96,9 @@ class Interpreter(object):
         left = self.current_token
         self.eat(INTEGER)
 
-        # we expect the current token to be a '+' token
+        # we expect the current token to be a '+' or '-' token
         op = self.current_token
-        self.eat(PLUS)
+        self.eat(OPERATION)
 
         # we expect the current token to be a single-digit
         right = self.current_token
@@ -105,7 +110,8 @@ class Interpreter(object):
         # has been successfully found and the method can just
         # return the result of adding two integers, thus
         # effectively interpreting client input
-        result = left.value + right.value
+        op_func = ops[op.value]
+        result = op_func(left.value, right.value)
         return result
 
 
